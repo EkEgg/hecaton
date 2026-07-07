@@ -30,4 +30,4 @@ class ProtocolPyQtUi(QObject, metaclass=QObjectProtocolUiMetaclass):
         self.insert_signal.emit(pos, char)
 
     def signal_delete(self, pos: int):
-        self.delete_signal.emite(pos)
+        self.delete_signal.emit(pos)

@@ -10,6 +10,7 @@ class DemoTextEditor(QPlainTextEdit):
 
         super().__init__(*args, **kwargs)
         self._prev_text = self.toPlainText()
+        self._suppress_local_sync = False
         self.document().contentsChange.connect(self._on_contents_change)
 
         self.protocol_core = protocol_core
@@ -19,19 +20,32 @@ class DemoTextEditor(QPlainTextEdit):
 
     @pyqtSlot(int, str)
     def _handle_protocol_insert_signal(self, pos: int, char: str):
-        cursor = self.textCursor()
-        cursor.setPosition(pos)
-        cursor.insertText(char)
+        self._suppress_local_sync = True
+        try:
+            cursor = self.textCursor()
+            cursor.setPosition(pos)
+            cursor.insertText(char)
+        finally:
+            self._suppress_local_sync = False
+            self._prev_text = self.toPlainText()
 
     
     @pyqtSlot(int)
     def _handle_protocol_delete_signal(self, pos):
-        cursor = self.textCursor()
-        cursor.setPosition(pos)
-        cursor.deleteChar()
+        self._suppress_local_sync = True
+        try:
+            cursor = self.textCursor()
+            cursor.setPosition(pos)
+            cursor.deleteChar()
+        finally:
+            self._suppress_local_sync = False
+            self._prev_text = self.toPlainText()
 
 
     def _on_contents_change(self, position, chars_removed, chars_added):
+        if self._suppress_local_sync:
+            return
+
         new_text = self.toPlainText()
 
         if chars_removed:
