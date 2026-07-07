@@ -17,16 +17,15 @@ class NodeIdentification:
 class Node:
 
     def __init__(self, id, host, port):
-
         self.id = id
         self.host = host
         self.port = port
-
-        self.connection = rpyc.connect(host, port)
-
         self.outgoing = Queue()
-        self.worker_stop_event = threading.Event()
 
+    
+    def activate(self):
+        self.connection = rpyc.connect(self.host, self.port)
+        self.worker_stop_event = threading.Event()
         self.worker_thread = threading.Thread(
             target=Node._work,
             args=(self, self.worker_stop_event, 0.1),
@@ -68,6 +67,10 @@ class ProtocolOutput:
                 port=node_identification.port
             )
         self.nodes = nodes
+    
+    def activate(self):
+        for node in self.nodes.values():
+            node.activate()
     
     def enqueue_message(self, node_id: int, message: MessageDto):
         node = self.nodes[node_id]

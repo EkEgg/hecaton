@@ -1,12 +1,14 @@
 import argparse
 import sys
+import threading
 from rpc import ProtocolRpcService
 from output import ProtocolOutput, NodeIdentification
 from input import ProtocolInput
 from protocol import ProtocolCore
 from ui import ProtocolPyQtUi
-from PyQt6.QtWidgets import QApplication, QPlainTextEdit
+from PyQt6.QtWidgets import QApplication, QMessageBox
 from text_editor import DemoTextEditor
+from rpyc import ThreadedServer
 
 
 def parse_node(value):
@@ -84,9 +86,24 @@ if __name__ == "__main__":
     input = ProtocolInput(core)
     rpcService = ProtocolRpcService(input)
 
+    rpc_server = ThreadedServer(ProtocolRpcService(input), port=args.port)
+    rpc_thread = threading.Thread(target=rpc_server.start, daemon=True)
+    rpc_thread.start()
+
     app = QApplication(sys.argv)
+    app.aboutToQuit.connect(rpc_server.close)
+
+    QMessageBox.information(
+        None,
+        f"Hecaton - node {args.id} : port {args.port}",
+        "Press Ok only when every node has started.",
+        QMessageBox.StandardButton.Ok
+    )
+
+    output.activate()
+
     editor = DemoTextEditor(core, ui)
-    editor.setWindowTitle(f"Tracked Text Edit - node {args.id} : port {args.port}")
+    editor.setWindowTitle(f"Hecaton - node {args.id} : port {args.port}")
     editor.resize(500, 300)
     editor.show()
 
