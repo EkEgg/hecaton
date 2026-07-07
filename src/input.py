@@ -13,6 +13,7 @@ class ProtocolInput:
 
         self.incoming = Queue[MessageDto]()
 
+        self.new_message_event = threading.Event()
         self.stop_worker_event = threading.Event()
         self.thread = threading.Thread(
             target=ProtocolInput._work,
@@ -23,21 +24,23 @@ class ProtocolInput:
 
     def dispose(self):
         self.stop_worker_event.set()
+        self.new_message_event.set()
     
     def enqueue_message(self, message: MessageDto):
         self.incoming.put(message)
+        self.new_message_event.set()
 
     def _work(self, stop_event: threading.Event, poll_interval: float):
-        while not stop_event.is_set():
-            try:
-                message = self.incoming.get(timeout=poll_interval)
-            except Empty:
-                continue
-            try:
-                with self.core.lock:
-                    self.core.handle_message(message)
-            except Exception:
-                self.incoming.put(message)
-                time.sleep(poll_interval)
-            finally:
+        while True:
+
+            self.new_message_event.wait()
+            self.new_message_event.clear()
+
+            if stop_event.is_set():
+                break
+
+            message = self.incoming.get(timeout=poll_interval)
+            print(f"Received message: {message}")
+            with self.core.lock:
+                self.core.handle_message(message)
                 self.incoming.task_done()

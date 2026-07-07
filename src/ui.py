@@ -26,6 +26,7 @@ class ProtocolPyQtUi(QObject, metaclass=QObjectProtocolUiMetaclass):
     delete_signal = pyqtSignal(int)
 
     def signal_insert(self, pos: int, char: str):
+        print("Hey")
         self.insert_signal.emit(pos, char)
 
     def signal_delete(self, pos: int):

@@ -17,11 +17,11 @@ class ProtocolCore:
         self.lock = Lock()
 
 
-    def handle_messsage(self, message: MessageDto):
+    def handle_message(self, message: MessageDto):
 
-        if message.class_name == "INSERT":
+        if message.type == "INSERT":
             return self._handle_insert_message(message)
-        if message.class_name == "DELETE":
+        if message.type == "DELETE":
             return self._handle_delete_message(message)
         
         return True
@@ -44,6 +44,9 @@ class ProtocolCore:
         insert_visible_pos = self.wstring.visible_index(wchar.id)
         self.ui.signal_insert(insert_visible_pos, wchar.char)
 
+        print(f"Handled remote insert: {wchar.id}")
+        print(self.wstring)
+
         return True
 
     def _handle_delete_message(self, message: MessageDto):
@@ -58,6 +61,9 @@ class ProtocolCore:
         self.wstring.delete(wchar_id)
 
         self.ui.signal_delete(delete_visible_pos)
+
+        print(f"Handled remote delete: {wchar_id}")
+        print(self.wstring)
 
         return True
     
@@ -100,7 +106,7 @@ class ProtocolCore:
         message = MessageDto(
             sender_id=self.id,
             type="INSERT",
-            wchar=wchar
+            wchar=crdt_wchar_to_dto_wchar(wchar)
         )
         self.output.broadcast_message(message)
 

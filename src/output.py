@@ -25,6 +25,7 @@ class Node:
     
     def activate(self):
         self.connection = rpyc.connect(self.host, self.port)
+        self.worker_new_message_event = threading.Event()
         self.worker_stop_event = threading.Event()
         self.worker_thread = threading.Thread(
             target=Node._work,
@@ -38,19 +39,18 @@ class Node:
     
     def _work(node: Node, stop_event: threading.Event, poll_interval: float):
 
-        while not stop_event.is_set():
-            try:
-                message = node.outgoing.get(timeout=poll_interval)
-            except Empty:
-                continue
+        while True:
 
-            try:
-                message_json = json.dumps(message.__dict__)
+            node.worker_new_message_event.wait()
+            node.worker_new_message_event.clear()
+
+            if node.worker_stop_event.is_set():
+                break
+
+            while not node.outgoing.empty():
+                message = node.outgoing.get(timeout=poll_interval)
+                message_json = json.dumps(message, default=lambda o: o.__dict__)
                 node.connection.root.send_message(message_json)
-            except Exception:
-                node.outgoing.put(message)
-                time.sleep(poll_interval)
-            finally:
                 node.outgoing.task_done()
 
 
@@ -75,8 +75,10 @@ class ProtocolOutput:
     def enqueue_message(self, node_id: int, message: MessageDto):
         node = self.nodes[node_id]
         node.outgoing.put(message)
+        node.worker_new_message_event.set()
 
     def broadcast_message(self, message: MessageDto):
         for node in self.nodes.values():
             node.outgoing.put(message)
+            node.worker_new_message_event.set()
 
