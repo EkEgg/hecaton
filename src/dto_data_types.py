@@ -1,18 +1,17 @@
 from dataclasses import dataclass
+from crdt_data_types import WCharId
 
 @dataclass
 class MessageDto:
     sender_id: int
-    clock_vector: list[int]
-    class_name: str
-    wchar: WCharDto | None
+    type: str
+    wchar: WCharDto | None = None
+    wchar_id: WCharId | None = None
+
 
 @dataclass
 class WCharDto:
-    author_id: int
-    author_clock: int
+    id: WCharId
     char: str
-    previous_author_id: int
-    previous_author_clock: int
-    next_author_id: int
-    next_author_clock: int
+    prev_id: WCharId
+    next_id: WCharId

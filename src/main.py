@@ -4,30 +4,9 @@ from rpc import ProtocolRpcService
 from output import ProtocolOutput, NodeIdentification
 from input import ProtocolInput
 from protocol import ProtocolCore
+from ui import ProtocolPyQtUi
 from PyQt6.QtWidgets import QApplication, QPlainTextEdit
-
-
-class TrackedTextEdit(QPlainTextEdit):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._prev_text = self.toPlainText()
-        self.document().contentsChange.connect(self._on_contents_change)
-
-    def _on_contents_change(self, position, chars_removed, chars_added):
-        new_text = self.toPlainText()
-
-        if chars_removed:
-            print(f"DELETE: {position} to {position + chars_removed}")
-
-        if chars_added:
-            added_text = new_text[position:position + chars_added]
-            if added_text == "coala":
-                cursor = self.textCursor()
-                cursor.setPosition(3)
-                self.setTextCursor(cursor)
-            print(f"INSERT: {position} gets {added_text}")
-
-        self._prev_text = new_text
+from text_editor import DemoTextEditor
 
 
 def parse_node(value):
@@ -58,7 +37,7 @@ def parse_args():
     parser.add_argument("--id", type=int, required=True, help="Node id in the range 0..N-1")
     parser.add_argument(
         "--nodes",
-        nargs="+",
+        nargs="*",
         required=True,
         help="List of other node addresses in the form <id>=<host>:<port>",
     )
@@ -99,19 +78,16 @@ if __name__ == "__main__":
     ))
     node_count = len(nodes) + 1
 
+    ui = ProtocolPyQtUi()
     output = ProtocolOutput(nodes)
-    core = ProtocolCore(output)
+    core = ProtocolCore(args.id, output, ui)
     input = ProtocolInput(core)
     rpcService = ProtocolRpcService(input)
 
     app = QApplication(sys.argv)
-    editor = TrackedTextEdit()
+    editor = DemoTextEditor(core, ui)
     editor.setWindowTitle(f"Tracked Text Edit - node {args.id} : port {args.port}")
     editor.resize(500, 300)
     editor.show()
-
-    print(f"port={args.port}")
-    print(f"id={args.id}")
-    print(f"nodes={args.nodes}")
 
     sys.exit(app.exec())

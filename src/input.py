@@ -1,8 +1,8 @@
 import time
 from queue import Queue, Empty
-from src.dto_data_types import MessageDto
+from dto_data_types import MessageDto
 import threading
-from src.protocol import ProtocolCore
+from protocol import ProtocolCore
 
 
 class ProtocolInput:
@@ -34,7 +34,8 @@ class ProtocolInput:
             except Empty:
                 continue
             try:
-                self.core.handle_message(message)
+                with self.core.lock:
+                    self.core.handle_message(message)
             except Exception:
                 self.incoming.put(message)
                 time.sleep(poll_interval)

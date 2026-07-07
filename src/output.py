@@ -73,3 +73,7 @@ class ProtocolOutput:
         node = self.nodes[node_id]
         node.outgoing.put(message)
 
+    def broadcast_message(self, message: MessageDto):
+        for node in self.nodes.values():
+            node.outgoing.put(message)
+

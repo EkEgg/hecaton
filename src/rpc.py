@@ -1,7 +1,7 @@
 import rpyc
 import json
-from src.dto_data_types import MessageDto
-from src.input import ProtocolInput
+from dto_data_types import MessageDto
+from input import ProtocolInput
 
 class ProtocolRpcService(rpyc.Service):
 
