@@ -44,7 +44,7 @@ class Node:
             node.worker_new_message_event.wait()
             node.worker_new_message_event.clear()
 
-            if node.worker_stop_event.is_set():
+            if stop_event.is_set():
                 break
 
             while not node.outgoing.empty():
