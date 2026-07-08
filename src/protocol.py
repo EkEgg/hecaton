@@ -126,6 +126,9 @@ class ProtocolCore:
                 i = i - 1
             return
         
+        if self.wstring.get_visible(pos) is None:
+            return
+
         wchar = self.wstring.get_visible(pos)
         self.wstring.delete(wchar.id)
 
