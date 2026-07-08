@@ -22,6 +22,7 @@ class ProtocolRpcService(rpyc.Service):
         message = MessageDto(**json.loads(message_json))
         if message.wchar is not None:
             message.wchar = WCharDto(**message.wchar)
+            message.wchar.id = WCharId(**message.wchar.id)
             message.wchar.next_id = WCharId(**message.wchar.next_id)
             message.wchar.prev_id = WCharId(**message.wchar.prev_id)
         if message.wchar_id is not None:

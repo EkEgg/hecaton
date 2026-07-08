@@ -39,8 +39,9 @@ class ProtocolInput:
             if stop_event.is_set():
                 break
 
-            message = self.incoming.get(timeout=poll_interval)
-            print(f"Received message: {message}")
-            with self.core.lock:
-                self.core.handle_message(message)
+            while not self.incoming.empty():
+                message = self.incoming.get(timeout=poll_interval)
+                print(f"Received message: {message}")
+                with self.core.lock:
+                    self.core.handle_message(message)
                 self.incoming.task_done()
